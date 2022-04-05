@@ -62,7 +62,7 @@ ContactGraph::ContactGraph(std::vector<Contact*> _contacts) {
   build_graph();
 }
 
-void ContactGraph::cgr_dijkstra(uint from, uint to) {
+Route* ContactGraph::cgr_dijkstra(uint from, uint to) {
   arrivalTime.resize(n);
   prevnode.resize(n);
   prevedge.resize(n);
@@ -119,9 +119,26 @@ void ContactGraph::cgr_dijkstra(uint from, uint to) {
       }
     }
   }
+
+  // If we did not find a path
+  if (double_equal(arrivalTime[to], -1)) {
+    return new Route({}, -1);
+  }
+
+  // Reconstruct the route backwards
+  std::vector<Contact*> route;
+  uint current = to;
+  while (current != -1) {
+    route.push_back(contacts[current]);
+    current = prevnode[current];
+  }
+  // Reverse the route
+  reverse(route.begin(), route.end());
+
+  return new Route(route, arrivalTime[to]);
 }
 
-void ContactGraph::dijkstra(std::string from, std::string to) {
+Route* ContactGraph::dijkstra(std::string from, std::string to) {
 
   if (!participant_to_identity.count(from)) {
     std::cerr << from << " is not a valid participant.\n";
@@ -136,5 +153,5 @@ void ContactGraph::dijkstra(std::string from, std::string to) {
   uint from_index = participant_to_identity[from];
   uint to_index = participant_to_identity[to];
 
-  cgr_dijkstra(from_index, to_index);
+  return cgr_dijkstra(from_index, to_index);
 }

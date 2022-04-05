@@ -8,6 +8,7 @@
 #include <vector>
 #include "contact.hpp"
 #include "utilities.hpp"
+#include "route.hpp"
 
 class ContactGraph {
 
@@ -30,7 +31,7 @@ private:
   std::vector<uint> prevnode;
   std::vector<uint> prevedge;
 
-  void cgr_dijkstra(uint from, uint to);
+  Route* cgr_dijkstra(uint from, uint to);
 
   // ---------------------------------------------------------------------------
   // Yen related stuff
@@ -39,7 +40,7 @@ private:
 public:
   ContactGraph(std::vector<Contact*> contacts);
 
-  void dijkstra(std::string from, std::string to);
+  Route* dijkstra(std::string from, std::string to);
 
   void debug() {
     std::cout << "Number of nodes " << n << "\n";
