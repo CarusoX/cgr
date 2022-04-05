@@ -12,13 +12,12 @@
 class ContactGraph {
 
 private:
-  uint n;
-  std::vector<Contact*> contacts;
-  std::vector<std::vector<uint>> contact_graph;
-  std::unordered_map<std::string, uint> participant_to_identifier;
-  std::unordered_map<std::string, uint> participant_to_identity;
-  std::vector<uint> prevnode;
-  std::vector<uint> prevedge;
+  uint n; // the ammount of contacts of the graph (includes identity contacts)
+  std::vector<Contact*> contacts; // the contacts of the graph
+  std::vector<std::vector<uint>> contact_graph; // graph represented by an adjacency list
+
+  std::unordered_map<std::string, uint> participant_to_identifier; // participant to identifier
+  std::unordered_map<std::string, uint> participant_to_identity; // participant to identity contact
 
   void add_participant_to_dictionary(std::string participant);
 
@@ -28,8 +27,14 @@ private:
   // Dijkstra related stuff
   // ---------------------------------------------------------------------------
   std::vector<double> arrivalTime;
+  std::vector<uint> prevnode;
+  std::vector<uint> prevedge;
 
   void cgr_dijkstra(uint from, uint to);
+
+  // ---------------------------------------------------------------------------
+  // Yen related stuff
+  // ---------------------------------------------------------------------------
 
 public:
   ContactGraph(std::vector<Contact*> contacts);
