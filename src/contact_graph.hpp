@@ -4,8 +4,10 @@
 #include <algorithm>
 #include <iostream>
 #include <queue>
+#include <unordered_map>
 #include <vector>
 #include "contact.hpp"
+#include "utilities.hpp"
 
 class ContactGraph {
 
@@ -13,7 +15,13 @@ private:
   uint n;
   std::vector<Contact*> contacts;
   std::vector<std::vector<uint>> contact_graph;
-  std::vector<std::string> contactParticipants;
+  std::unordered_map<std::string, uint> participant_to_identifier;
+  std::unordered_map<std::string, uint> participant_to_identity;
+  std::vector<uint> prevnode;
+  std::vector<uint> prevedge;
+
+  void add_participant_to_dictionary(std::string participant);
+
   void build_graph();
 
   // ---------------------------------------------------------------------------

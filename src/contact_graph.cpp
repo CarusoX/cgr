@@ -1,29 +1,5 @@
 #include "contact_graph.hpp"
 
-bool double_equal(double a, double b, double EPS = 1e-9) {
-  return abs(a - b) <= EPS;
-}
-
-bool double_less(double a, double b, double EPS = 1e-9) {
-  return a + EPS < b;
-}
-
-std::vector<std::string> getContactParticipants(std::vector<Contact*>& contacts) {
-  std::vector<std::string> contactParticipants;
-  for (Contact* contact : contacts) {
-    contactParticipants.push_back(contact->getFrom());
-    contactParticipants.push_back(contact->getTo());
-  }
-
-  // Sort the contact names  
-  std::sort(contactParticipants.begin(), contactParticipants.end());
-
-  // We delete repeated names
-  contactParticipants.resize(unique(contactParticipants.begin(), contactParticipants.end()) - contactParticipants.begin());
-
-  return contactParticipants;
-}
-
 void ContactGraph::build_graph() {
 
   // Which contacts have i as "from"
@@ -33,8 +9,8 @@ void ContactGraph::build_graph() {
 
   for (uint i = 0; i < n; ++i) {
     Contact* contact = contacts[i];
-    uint from_index = std::lower_bound(contactParticipants.begin(), contactParticipants.end(), contact->getFrom()) - contactParticipants.begin();
-    uint to_index = std::lower_bound(contactParticipants.begin(), contactParticipants.end(), contact->getTo()) - contactParticipants.begin();
+    uint from_index = participant_to_identifier[contact->getFrom()];
+    uint to_index = participant_to_identifier[contact->getTo()];
     who_from[from_index].push_back(i);
     who_to[to_index].push_back(i);
   }
@@ -52,16 +28,21 @@ void ContactGraph::build_graph() {
   }
 }
 
+void ContactGraph::add_participant_to_dictionary(std::string participant) {
+  if (!participant_to_identifier.count(participant)) {
+    participant_to_identifier[participant] = participant_to_identifier.size();
+    participant_to_identity[participant] = contacts.size();
+    contacts.push_back(new Contact(participant, participant, 0, -1, 1, 0));
+  }
+}
+
 ContactGraph::ContactGraph(std::vector<Contact*> _contacts) {
 
-  contactParticipants = getContactParticipants(_contacts);
-
-  // For each contact participant, we will add a contact to itself
-  for (std::string& contactParticipant : contactParticipants) {
-    contacts.push_back(new Contact(contactParticipant, contactParticipant, 0, -1, 1, 0));
+  for (Contact* contact : _contacts) {
+    add_participant_to_dictionary(contact->getFrom());
+    add_participant_to_dictionary(contact->getTo());
   }
 
-  // Add the contacts from the user
   contacts.insert(contacts.end(), _contacts.begin(), _contacts.end());
 
   // Set the number of vertices of the graph
@@ -75,11 +56,15 @@ ContactGraph::ContactGraph(std::vector<Contact*> _contacts) {
 
 void ContactGraph::cgr_dijkstra(uint from, uint to) {
   arrivalTime.resize(n);
+  prevnode.resize(n);
+  prevedge.resize(n);
   fill(arrivalTime.begin(), arrivalTime.end(), -1);
   std::priority_queue<std::pair<double, uint>> pq;
 
   arrivalTime[from] = 0;
   pq.push({ 0, from });
+  prevnode[0] = -1;
+  prevedge[0] = -1;
   while (!pq.empty()) {
     double currentArrivalTime = -pq.top().first;
     uint currentNode = pq.top().second;
@@ -88,7 +73,8 @@ void ContactGraph::cgr_dijkstra(uint from, uint to) {
       continue;
     }
 
-    for (uint neighbour : contact_graph[currentNode]) {
+    for(uint edge_index = 0; edge_index < contact_graph[currentNode].size(); ++edge_index) {
+      uint neighbour = contact_graph[currentNode][edge_index];
       Contact* contact = contacts[neighbour];
       double nextArrivalTime;
       if (double_less(contact->getStart(), currentArrivalTime)) {
@@ -99,6 +85,8 @@ void ContactGraph::cgr_dijkstra(uint from, uint to) {
       }
       if (double_equal(arrivalTime[neighbour], -1) || double_less(nextArrivalTime, arrivalTime[neighbour])) {
         arrivalTime[neighbour] = nextArrivalTime;
+        prevnode[neighbour] = currentNode;
+        prevedge[neighbour] = edge_index;
         pq.push({ -nextArrivalTime, neighbour });
       }
     }
@@ -106,17 +94,19 @@ void ContactGraph::cgr_dijkstra(uint from, uint to) {
 }
 
 void ContactGraph::dijkstra(std::string from, std::string to) {
-  uint from_index = std::lower_bound(contactParticipants.begin(), contactParticipants.end(), from) - contactParticipants.begin();
-  uint to_index = std::lower_bound(contactParticipants.begin(), contactParticipants.end(), to) - contactParticipants.begin();
 
-  if (from_index == n) {
+  if (!participant_to_identity.count(from)) {
     std::cerr << from << " is not a valid participant.\n";
     exit(-1);
   }
-  if (to_index == n) {
+
+  if (!participant_to_identity.count(to)) {
     std::cerr << to << " is not a valid participant.\n";
     exit(-1);
   }
+
+  uint from_index = participant_to_identity[from];
+  uint to_index = participant_to_identity[to];
 
   cgr_dijkstra(from_index, to_index);
 }
