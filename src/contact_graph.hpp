@@ -22,6 +22,8 @@ private:
 
   void add_participant_to_dictionary(std::string participant);
 
+  void assert_participant_exists(std::string participant);
+
   void build_graph();
 
   // ---------------------------------------------------------------------------
@@ -35,12 +37,15 @@ private:
 
   // ---------------------------------------------------------------------------
   // Yen related stuff
-  // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------=
+  std::vector<Route*> cgr_yen(uint from, uint to, uint ammount);
 
 public:
   ContactGraph(std::vector<Contact*> contacts);
 
   Route* dijkstra(std::string from, std::string to);
+
+  std::vector<Route*> yen(std::string from, std::string to, uint ammount);
 
   void debug() {
     std::cout << "Number of nodes " << n << "\n";

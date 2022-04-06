@@ -13,6 +13,13 @@ void ContactGraph::add_participant_to_dictionary(std::string participant) {
   }
 }
 
+void ContactGraph::assert_participant_exists(std::string participant) {
+  if (!participant_to_identity.count(participant)) {
+    std::cerr << participant << " is not a valid participant.\n";
+    exit(-1);
+  }
+}
+
 void ContactGraph::build_graph() {
 
   // Which contacts have i as "from"
@@ -139,19 +146,65 @@ Route* ContactGraph::cgr_dijkstra(uint from, uint to) {
 }
 
 Route* ContactGraph::dijkstra(std::string from, std::string to) {
-
-  if (!participant_to_identity.count(from)) {
-    std::cerr << from << " is not a valid participant.\n";
-    exit(-1);
-  }
-
-  if (!participant_to_identity.count(to)) {
-    std::cerr << to << " is not a valid participant.\n";
-    exit(-1);
-  }
+  // Assert from and to exists
+  assert_participant_exists(from);
+  assert_participant_exists(to);
 
   uint from_index = participant_to_identity[from];
   uint to_index = participant_to_identity[to];
 
   return cgr_dijkstra(from_index, to_index);
+}
+
+std::vector<Route*> ContactGraph::cgr_yen(uint from, uint to, uint ammount) {
+  std::vector<Route*> routes;
+
+  Route* bestRoute = cgr_dijkstra(from, to);
+
+
+  if (double_equal(bestRoute->getRouteCost(), -1)) {
+    // There are no roots in this case
+    return routes;
+  }
+
+  // Push the first route to the list
+  routes.push_back(bestRoute);
+
+  // Will represent a pair of {c, r}, meaning we have a route "r" with cost "c"
+  typedef std::pair<double, Route*> state;
+
+  // Create a minimum heap for the routes
+  std::priority_queue<state, std::vector<state>, std::greater<state>> pq;
+
+  for (uint k = 1; k < ammount; ++k) {
+    // Get the previous best route
+    std::vector<Contact*> lastRoute = routes[k - 1]->getRoute();
+
+    Route* rootRoute = new Route({}, 0);
+
+    for (uint i = 0; i + 2 < lastRoute.size(); ++i) {
+
+      Contact* spurContact = lastRoute[i];
+
+      rootRoute->addContact(spurContact);
+
+      for (Route* route : routes) {
+        if (rootRoute->getHash(0, i + 1) == route->getHash(0, i + 1)) {
+          std::cout << i << " works " << std::endl;
+        }
+      }
+    }
+    break;
+  }
+}
+
+std::vector<Route*> ContactGraph::yen(std::string from, std::string to, uint ammount) {
+  // Assert from and to exists
+  assert_participant_exists(from);
+  assert_participant_exists(to);
+
+  uint from_index = participant_to_identity[from];
+  uint to_index = participant_to_identity[to];
+
+  return cgr_yen(from_index, to_index, ammount);
 }
