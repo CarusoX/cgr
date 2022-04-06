@@ -8,7 +8,7 @@
 class Route {
 
 private:
-  std::vector<Contact*> route;
+  std::vector<ContactT> route;
   double routeCost;
 
   // -----------------------------------------------------------------------------
@@ -22,13 +22,13 @@ private:
   void precomputeHashingInformation();
 
 public:
-  Route(std::vector<Contact*> _route, double _routeCost);
+  Route(std::vector<ContactT> _route, double _routeCost);
 
-  Route* addContact(Contact* contact);
+  Route* addContact(ContactT contact);
 
-  std::vector<Contact*> getRoute();
+  std::vector<ContactT> getRoute();
 
-  std::vector<Contact*> getPrefixRoute(uint p);
+  std::vector<ContactT> getPrefixRoute(uint p);
 
   double getRouteCost();
 
@@ -37,7 +37,7 @@ public:
   }
 
   void debug() {
-    for (Contact* contact : route) {
+    for (ContactT contact : route) {
       contact->debug();
     }
     std::cout << "Route cost: " << routeCost << std::endl;

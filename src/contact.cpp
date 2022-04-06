@@ -32,3 +32,19 @@ double Contact::getRate() {
 double Contact::getOwlt() {
   return owlt;
 }
+
+bool Contact::canGoTo(Contact* contact, double time) {
+  return double_less(time, contact->getEnd());
+}
+
+double Contact::edgeCost(Contact* contact, double time) {
+  if (!canGoTo(contact, time)) {
+    std::cerr << "You can't go to that contact" << std::endl;
+    exit(-1);
+  }
+  if (time < contact->getStart()) {
+    return contact->getStart() + contact->getOwlt();
+  }
+
+  return time + contact->getOwlt();
+}

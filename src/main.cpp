@@ -5,7 +5,7 @@
 
 int main() {
 
-  std::vector<Contact*> contacts = read_contact_plan("../plans/tutorial.txt");
+  std::vector<ContactT> contacts = read_contact_plan("../plans/tutorial.txt");
 
   ContactGraph* graph = new ContactGraph(contacts);
   graph->yen("1", "5", 3);

@@ -3,8 +3,10 @@
 
 #include <iostream>
 #include <string>
+#include "node.hpp"
+#include "utilities.hpp"
 
-class Contact {
+class Contact : Node {
 
 private:
   std::string from; // from which node
@@ -29,9 +31,15 @@ public:
 
   double getOwlt();
 
+  bool canGoTo(Contact* neighbour, double time);
+
+  double edgeCost(Contact* neighbour, double time);
+
   void debug() {
     std::cout << from << " " << to << " " << start << " " << end << " " << rate << " " << owlt << "\n";
   }
 };
+
+using ContactT = Contact*;
 
 #endif
