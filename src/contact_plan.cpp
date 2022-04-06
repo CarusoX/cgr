@@ -1,6 +1,6 @@
-#include "contact_graph.hpp"
+#include "contact_plan.hpp"
 
-void ContactGraph::add_participant_to_dictionary(std::string participant) {
+void ContactPlan::add_participant_to_dictionary(std::string participant) {
   if (!participant_to_identifier.count(participant)) {
     // We assign the participant a new identifier
     participant_to_identifier[participant] = participant_to_identifier.size();
@@ -13,14 +13,14 @@ void ContactGraph::add_participant_to_dictionary(std::string participant) {
   }
 }
 
-void ContactGraph::assert_participant_exists(std::string participant) {
+void ContactPlan::assert_participant_exists(std::string participant) {
   if (!participant_to_identity.count(participant)) {
     std::cerr << participant << " is not a valid participant.\n";
     exit(-1);
   }
 }
 
-void ContactGraph::build_graph() {
+void ContactPlan::build_graph() {
 
   if (graph != NULL) return;
 
@@ -55,7 +55,7 @@ void ContactGraph::build_graph() {
   graph = new Graph(contacts, edges);
 }
 
-ContactGraph::ContactGraph(std::vector<ContactT> _contacts) {
+ContactPlan::ContactPlan(std::vector<ContactT> _contacts) {
 
   // We assign each participant a new identifier
   for (ContactT contact : _contacts) {
@@ -70,7 +70,7 @@ ContactGraph::ContactGraph(std::vector<ContactT> _contacts) {
   n = contacts.size();
 }
 
-Route* ContactGraph::dijkstra(std::string from, std::string to) {
+Route* ContactPlan::dijkstra(std::string from, std::string to) {
 
   // Build the graph if not done yet
   build_graph();
@@ -85,7 +85,7 @@ Route* ContactGraph::dijkstra(std::string from, std::string to) {
   return graph->dijkstra(from_index, to_index);
 }
 
-// std::vector<Route*> ContactGraph::cgr_yen(uint from, uint to, uint ammount) {
+// std::vector<Route*> ContactPlan::cgr_yen(uint from, uint to, uint ammount) {
 //   std::vector<Route*> routes;
 
 //   Route* bestRoute = cgr_dijkstra(from, to);
@@ -127,7 +127,7 @@ Route* ContactGraph::dijkstra(std::string from, std::string to) {
 //   }
 // }
 
-std::vector<Route*> ContactGraph::yen(std::string from, std::string to, uint ammount) {
+std::vector<Route*> ContactPlan::yen(std::string from, std::string to, uint ammount) {
 
   // Build the graph if not done yet
   build_graph();

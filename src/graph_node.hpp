@@ -1,3 +1,6 @@
+#ifndef GRAPH_NODE_H
+#define GRAPH_NODE_H
+
 #include "node.hpp"
 
 template <class T, class S>
@@ -13,3 +16,5 @@ public:
 
 template <class T>
 using GraphNodeT = GraphNode<T>*;
+
+#endif

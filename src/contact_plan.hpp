@@ -1,5 +1,5 @@
-#ifndef CONTACT_GRAPH_H
-#define CONTACT_GRAPH_H
+#ifndef CONTACT_PLAN_H
+#define CONTACT_PLAN_H
 
 #include <iostream>
 #include <unordered_map>
@@ -9,7 +9,7 @@
 #include "utilities.hpp"
 #include "route.hpp"
 
-class ContactGraph {
+class ContactPlan {
 
 private:
   uint n; // the ammount of contacts (includes identity contacts)
@@ -27,7 +27,7 @@ private:
   void build_graph();
 
 public:
-  ContactGraph(std::vector<ContactT> contacts);
+  ContactPlan(std::vector<ContactT> contacts);
 
   Route* dijkstra(std::string from, std::string to);
 

@@ -1,28 +1,25 @@
-CC=gcc
 CXX=g++
 RM=rm -f
-CPPFLAGS=-g $(shell root-config --cflags)
-LDFLAGS=-g $(shell root-config --ldflags)
-LDLIBS=$(shell root-config --libs)
+CPPFLAGS=-g --std=c++20
 
-SRCS=tool.cc support.cc
-OBJS=$(subst .cc,.o,$(SRCS))
+SRCS=contact_plan.cpp contact.cpp graph.cpp main.cpp read.cpp route.cpp utilities.cpp
+OBJS=$(subst .cpp,.o,$(SRCS))
 
-all: tool
+all: cgr
 
-tool: $(OBJS)
-    $(CXX) $(LDFLAGS) -o tool $(OBJS) $(LDLIBS)
+cgr: $(OBJS)
+		$(CXX) $(LDFLAGS) -o cgr $(OBJS) $(LDLIBS)
 
 depend: .depend
 
 .depend: $(SRCS)
-    $(RM) ./.depend
-    $(CXX) $(CPPFLAGS) -MM $^>>./.depend;
+		$(RM) ./.depend
+		$(CXX) $(CPPFLAGS) -MM $^>>./.depend;
 
 clean:
-    $(RM) $(OBJS)
+		$(RM) $(OBJS)
 
 distclean: clean
-    $(RM) *~ .depend
+		$(RM) *~ .depend
 
 include .depend
