@@ -29,9 +29,9 @@ private:
 public:
   ContactPlan(std::vector<ContactT> contacts);
 
-  Route* dijkstra(std::string from, std::string to);
+  RouteT<Contact> dijkstra(std::string from, std::string to);
 
-  std::vector<Route*> yen(std::string from, std::string to, uint ammount);
+  std::vector<RouteT<Contact>> yen(std::string from, std::string to, uint ammount);
 
   void debug() {
     std::cout << "Number of nodes " << n << "\n";

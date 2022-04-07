@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include "contact.hpp"
 #include "graph_node.hpp"
 #include "route.hpp"
 
@@ -38,9 +39,9 @@ private:
 public:
   Graph(std::vector<T*> nodeData, std::vector<std::vector<uint>> edges);
 
-  Route* dijkstra(uint from, uint to);
+  RouteT<T> dijkstra(uint from, uint to);
 
-  std::vector<Route*> yen(uint from, uint to, uint ammount);
+  std::vector<RouteT<T>> yen(uint from, uint to, uint ammount);
 
   void debug() {
     std::cout << "Printing the graph" << std::endl;

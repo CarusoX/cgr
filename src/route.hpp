@@ -5,43 +5,36 @@
 #include "contact.hpp"
 #include "utilities.hpp"
 
+// template <class T, class S>
+// concept CheckType = std::is_base_of<S, T>::value;
+
+template <class T>
 class Route {
 
 private:
-  std::vector<ContactT> route;
+  std::vector<T*> route;
   double routeCost;
 
-  // -----------------------------------------------------------------------------
-  // Hashing related stuff
-  // -----------------------------------------------------------------------------
-  __uint128_t MOD = 212345678987654321LL, P = 1777771, PI = 106955741089659571LL;
-  std::vector<__uint128_t> incrementalH, incrementalP, incrementalPI;
-
-  void pushOneHashingInformation(uintptr_t pointer);
-
-  void precomputeHashingInformation();
-
 public:
-  Route(std::vector<ContactT> _route, double _routeCost);
+  Route(std::vector<T*> _route, double _routeCost);
 
-  Route* addContact(ContactT contact);
+  Route<T>* addNode(T* contact);
 
-  std::vector<ContactT> getRoute();
+  std::vector<T*> getRoute();
 
-  std::vector<ContactT> getPrefixRoute(uint p);
+  std::vector<T*> getPrefixRoute(uint p);
 
   double getRouteCost();
 
-  __uint128_t getHash(uint s, uint e) {
-    return (((incrementalH[e] - incrementalH[s] + MOD) % MOD) * incrementalPI[s]) % MOD;
-  }
-
   void debug() {
-    for (ContactT contact : route) {
-      contact->debug();
+    for (T* node : route) {
+      node->debug();
     }
     std::cout << "Route cost: " << routeCost << std::endl;
   }
 };
+
+template <class T>
+using RouteT = Route<T>*;
 
 #endif

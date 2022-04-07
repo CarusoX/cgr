@@ -7,8 +7,9 @@ int main() {
 
   std::vector<ContactT> contacts = read_contact_plan("../plans/tutorial.txt");
 
-  ContactPlan* graph = new ContactPlan(contacts);
-  graph->yen("1", "5", 3);
+  ContactPlan* contactPlan = new ContactPlan(contacts);
+  Route<Contact> *route = contactPlan->dijkstra("1", "5");
+  route->debug();
 
   return 0;
 }

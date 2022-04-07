@@ -70,7 +70,7 @@ ContactPlan::ContactPlan(std::vector<ContactT> _contacts) {
   n = contacts.size();
 }
 
-Route* ContactPlan::dijkstra(std::string from, std::string to) {
+RouteT<Contact> ContactPlan::dijkstra(std::string from, std::string to) {
 
   // Build the graph if not done yet
   build_graph();
@@ -85,49 +85,7 @@ Route* ContactPlan::dijkstra(std::string from, std::string to) {
   return graph->dijkstra(from_index, to_index);
 }
 
-// std::vector<Route*> ContactPlan::cgr_yen(uint from, uint to, uint ammount) {
-//   std::vector<Route*> routes;
-
-//   Route* bestRoute = cgr_dijkstra(from, to);
-
-
-//   if (double_equal(bestRoute->getRouteCost(), -1)) {
-//     // There are no roots in this case
-//     return routes;
-//   }
-
-//   // Push the first route to the list
-//   routes.push_back(bestRoute);
-
-//   // Will represent a pair of {c, r}, meaning we have a route "r" with cost "c"
-//   typedef std::pair<double, Route*> state;
-
-//   // Create a minimum heap for the routes
-//   std::priority_queue<state, std::vector<state>, std::greater<state>> pq;
-
-//   for (uint k = 1; k < ammount; ++k) {
-//     // Get the previous best route
-//     std::vector<ContactT> lastRoute = routes[k - 1]->getRoute();
-
-//     Route* rootRoute = new Route({}, 0);
-
-//     for (uint i = 0; i + 2 < lastRoute.size(); ++i) {
-
-//       ContactT spurContact = lastRoute[i];
-
-//       rootRoute->addContact(spurContact);
-
-//       for (Route* route : routes) {
-//         if (rootRoute->getHash(0, i + 1) == route->getHash(0, i + 1)) {
-//           std::cout << i << " works " << std::endl;
-//         }
-//       }
-//     }
-//     break;
-//   }
-// }
-
-std::vector<Route*> ContactPlan::yen(std::string from, std::string to, uint ammount) {
+std::vector<RouteT<Contact>> ContactPlan::yen(std::string from, std::string to, uint ammount) {
 
   // Build the graph if not done yet
   build_graph();

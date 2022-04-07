@@ -1,1 +1,3 @@
-/src/ej
+/src/cgr
+/src/*.o
+/src/.depend

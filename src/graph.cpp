@@ -15,7 +15,7 @@ Graph<T>::Graph(std::vector<T*> nodeData, std::vector<std::vector<uint>> edges) 
   adjacency_list.resize(n);
 
   for (uint i = 0; i < n; ++i) {
-    nodes[i] = new Node(nodeData[i]);
+    nodes[i] = new GraphNode(nodeData[i]);
   }
 
   for (uint i = 0; i < edges.size(); ++i) {
@@ -27,7 +27,7 @@ Graph<T>::Graph(std::vector<T*> nodeData, std::vector<std::vector<uint>> edges) 
 }
 
 template <class T>
-Route* Graph<T>::dijkstra(uint from, uint to) {
+RouteT<T> Graph<T>::dijkstra(uint from, uint to) {
   arrivalTime.resize(n);
   prevnode.resize(n);
   prevedge.resize(n);
@@ -69,7 +69,7 @@ Route* Graph<T>::dijkstra(uint from, uint to) {
         continue;
       }
 
-      double nextArrivalTime = currentNode->edgeCost(nextNode);
+      double nextArrivalTime = currentNode->edgeCost(nextNode, currentArrivalTime);
 
       if (double_equal(arrivalTime[neighbour], -1) || double_less(nextArrivalTime, arrivalTime[neighbour])) {
         // If this contact was not reached yet, or we found a better path, update accordingly
@@ -83,7 +83,7 @@ Route* Graph<T>::dijkstra(uint from, uint to) {
 
   // If we did not find a path
   if (double_equal(arrivalTime[to], -1)) {
-    return new Route({}, -1);
+    return new Route<T>({}, -1);
   }
 
   // Reconstruct the route backwards
@@ -100,6 +100,55 @@ Route* Graph<T>::dijkstra(uint from, uint to) {
 }
 
 template <class T>
-std::vector<Route*> Graph<T>::yen(uint from, uint to, uint ammount) {
-  return { new Route({}, -1) };
+std::vector<RouteT<T>> Graph<T>::yen(uint from, uint to, uint ammount) {
+  std::vector<RouteT<T>> routes;
+
+  RouteT<T> bestRoute = dijkstra(from, to);
+
+
+  if (double_equal(bestRoute->getRouteCost(), -1)) {
+    // There are no roots in this case
+    return routes;
+  }
+
+  // Push the first route to the list
+  routes.push_back(bestRoute);
+
+  // Will represent a pair of {c, r}, meaning we have a route "r" with cost "c"
+  typedef std::pair<double, RouteT<T>> state;
+
+  // Create a minimum heap for the routes
+  std::priority_queue<state, std::vector<state>, std::greater<state>> pq;
+
+  for (uint k = 1; k < ammount; ++k) {
+    // Get the previous best route
+    std::vector<T*> lastRoute = routes[k - 1]->getRoute();
+
+    RouteT<T> rootRoute = new Route<T>({}, 0);
+
+    std::vector<uint> matching_routes, next_matching_routes;
+    for (uint i = 0; i < k; ++i) {
+      matching_routes.push_back(i);
+    }
+
+
+    for (uint i = 0; i + 2 < lastRoute.size(); ++i) {
+
+      T* spurContact = lastRoute[i];
+
+      rootRoute->addNode(spurContact);
+
+      for (RouteT<T> route : routes) {
+        for(uint matching_route : matching_routes) {
+          
+        }
+        if (rootRoute->getHash(0, i + 1) == route->getHash(0, i + 1)) {
+          std::cout << i << " works " << std::endl;
+        }
+      }
+    }
+    break;
+  }
 }
+
+template class Graph<Contact>;
