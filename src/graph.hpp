@@ -5,13 +5,15 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <unordered_map>
 #include "contact.hpp"
 #include "graph_node.hpp"
 #include "route.hpp"
 
 struct Edge {
   uint to;
-  Edge(uint _to) : to(_to) {}
+  bool supressed;
+  Edge(uint _to) : to(_to), supressed(0) {}
 };
 
 template <class T>
@@ -23,6 +25,9 @@ private:
   std::vector<GraphNodeT<T>> nodes; // the nodes of the graph
 
   std::vector<std::vector<Edge*>> adjacency_list; // graph represented by an adjacency list
+
+  std::unordered_map<T*, uint> node_identifier; // node -> identifier
+  std::vector<std::unordered_map<uint, uint>> edge_identifier; // edge -> identifier
 
   // ---------------------------------------------------------------------------
   // Dijkstra related stuff
@@ -41,7 +46,7 @@ public:
 
   RouteT<T> dijkstra(uint from, uint to);
 
-  std::vector<RouteT<T>> yen(uint from, uint to, uint ammount);
+  std::vector<RouteT<T>> yen(uint from, uint to, uint ammount, std::vector<uint> to_supress = {});
 
   void debug() {
     std::cout << "Printing the graph" << std::endl;

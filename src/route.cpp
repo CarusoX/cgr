@@ -1,17 +1,45 @@
 #include "route.hpp"
 
 template <class T>
+Route<T>::Route() {
+  route = {};
+  routeCost = 0;
+}
+
+template <class T>
 Route<T>::Route(std::vector<T*> _route, double _routeCost) {
   route = _route;
   routeCost = _routeCost;
 }
 
 template <class T>
-RouteT<T> Route<T>::addNode(T* contact) {
-  if (route.size()) {
-    routeCost = route.back()->edgeCost(contact, routeCost);
+Route<T>::~Route() {
+  while (route.size()) {
+    delete route.back();
+    route.pop_back();
   }
-  route.push_back(contact);
+}
+
+template <class T>
+bool Route<T>::isValid() {
+  return !double_equal(-1, routeCost);
+}
+
+template <class T>
+RouteT<T> Route<T>::addNode(T* node) {
+  if (route.size()) {
+    routeCost = route.back()->edgeCost(node, routeCost);
+  }
+  route.push_back(node);
+  return this;
+}
+
+template <class T>
+RouteT<T> Route<T>::merge(RouteT<T> otherRoute) {
+  std::vector<T*> nodes = otherRoute->getRoute();
+  for(T* node : nodes) {
+    this->addNode(node);
+  }
   return this;
 }
 
@@ -21,12 +49,12 @@ std::vector<T*> Route<T>::getRoute() {
 }
 
 template <class T>
-std::vector<T*> Route<T>::getPrefixRoute(uint p) {
-  std::vector<T*> preffixRoute;
-  for (uint i = 0; i < p; ++i) {
-    preffixRoute.push_back(route[i]);
+T* Route<T>::getNode(uint p) {
+  if (p < 0 || route.size() <= p) {
+    std::cerr << "Node at position " << p << " does not exist" << std::endl;
+    exit(-1);
   }
-  return preffixRoute;
+  return route[p];
 }
 
 template <class T>

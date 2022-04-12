@@ -13,15 +13,19 @@ Graph<T>::Graph(std::vector<T*> nodeData, std::vector<std::vector<uint>> edges) 
 
   nodes.resize(n);
   adjacency_list.resize(n);
+  edge_identifier.resize(n);
 
   for (uint i = 0; i < n; ++i) {
     nodes[i] = new GraphNode(nodeData[i]);
+    node_identifier[nodeData[i]] = i;
   }
+
 
   for (uint i = 0; i < edges.size(); ++i) {
     adjacency_list[i].resize(edges[i].size());
     for (uint j = 0; j < edges[i].size(); ++j) {
       adjacency_list[i][j] = new Edge(edges[i][j]);
+      edge_identifier[i][edges[i][j]] = j;
     }
   }
 }
@@ -42,8 +46,8 @@ RouteT<T> Graph<T>::dijkstra(uint from, uint to) {
   // From node setup
   arrivalTime[from] = 0;
   pq.push({ 0, from });
-  prevnode[0] = -1;
-  prevedge[0] = -1;
+  prevnode[from] = -1;
+  prevedge[from] = -1;
 
   while (!pq.empty()) {
     // Get the best state so far
@@ -61,11 +65,15 @@ RouteT<T> Graph<T>::dijkstra(uint from, uint to) {
     for (uint edge_index = 0; edge_index < adjacency_list[current].size(); ++edge_index) {
       Edge* edge = adjacency_list[current][edge_index];
 
+      // If the edge is supressed, don't go there
+      if (edge->supressed) continue;
+
       uint neighbour = edge->to;
 
       T* nextNode = nodes[neighbour]->node;
 
-      if (!currentNode->canGoTo(nextNode, currentArrivalTime)) {
+      // If there is no way to go the next node, or it's supressed, continue
+      if (!currentNode->canGoTo(nextNode, currentArrivalTime) || nodes[neighbour]->supressed) {
         continue;
       }
 
@@ -80,6 +88,7 @@ RouteT<T> Graph<T>::dijkstra(uint from, uint to) {
       }
     }
   }
+
 
   // If we did not find a path
   if (double_equal(arrivalTime[to], -1)) {
@@ -100,15 +109,20 @@ RouteT<T> Graph<T>::dijkstra(uint from, uint to) {
 }
 
 template <class T>
-std::vector<RouteT<T>> Graph<T>::yen(uint from, uint to, uint ammount) {
+std::vector<RouteT<T>> Graph<T>::yen(uint from, uint to, uint ammount, std::vector<uint> to_supress) {
   std::vector<RouteT<T>> routes;
 
   RouteT<T> bestRoute = dijkstra(from, to);
 
 
-  if (double_equal(bestRoute->getRouteCost(), -1)) {
-    // There are no roots in this case
+  if (!bestRoute->isValid()) {
+    // There are no routes in this case
     return routes;
+  }
+
+  // Supress the input nodes
+  for (uint node_to_supress : to_supress) {
+    nodes[node_to_supress]->supressed = true;
   }
 
   // Push the first route to the list
@@ -124,8 +138,9 @@ std::vector<RouteT<T>> Graph<T>::yen(uint from, uint to, uint ammount) {
     // Get the previous best route
     std::vector<T*> lastRoute = routes[k - 1]->getRoute();
 
-    RouteT<T> rootRoute = new Route<T>({}, 0);
+    RouteT<T> rootRoute = new Route<T>();
 
+    // Initialize the matching routes
     std::vector<uint> matching_routes, next_matching_routes;
     for (uint i = 0; i < k; ++i) {
       matching_routes.push_back(i);
@@ -133,22 +148,73 @@ std::vector<RouteT<T>> Graph<T>::yen(uint from, uint to, uint ammount) {
 
 
     for (uint i = 0; i + 2 < lastRoute.size(); ++i) {
+      std::vector<std::pair<uint, uint>> deleted_edges;
 
-      T* spurContact = lastRoute[i];
-
-      rootRoute->addNode(spurContact);
+      T* spurNode = lastRoute[i];
+      uint spurIdentifier = node_identifier[spurNode];
 
       for (RouteT<T> route : routes) {
-        for(uint matching_route : matching_routes) {
-          
+        // Recalculate the matching routes based on the last vertex
+        for (uint matching_route : matching_routes) {
+          if (routes[matching_route]->getNode(i) == spurNode) {
+            // We need to delete the edge with the next node
+            uint next_node_id = node_identifier[routes[matching_route]->getNode(i + 1)];
+            uint edge_to_delete = edge_identifier[spurIdentifier][next_node_id];
+            adjacency_list[spurIdentifier][edge_to_delete]->supressed = true;
+
+            // We later need to restore it
+            deleted_edges.push_back(std::make_pair(spurIdentifier, edge_to_delete));
+
+            // This route is still matching
+            next_matching_routes.push_back(matching_route);
+          }
         }
-        if (rootRoute->getHash(0, i + 1) == route->getHash(0, i + 1)) {
-          std::cout << i << " works " << std::endl;
-        }
+        swap(matching_routes, next_matching_routes);
+        next_matching_routes.clear();
+      }
+
+
+
+      // Calculate the spur path from the spur node to the sink
+      RouteT<T> spurPath = dijkstra(spurIdentifier, to);
+
+      if (spurPath->isValid()) {
+        RouteT<T> totalPath = new Route<T>();
+        totalPath->merge(rootRoute)->merge(spurPath);
+        pq.push({ totalPath->getRouteCost(), totalPath });
+      }
+
+      // Now the spur node is fixated
+      rootRoute->addNode(spurNode);
+
+      // Supress it for next time
+      nodes[spurIdentifier]->supressed = true;
+
+      // Restore the edges
+      for (std::pair<uint, uint> edge : deleted_edges) {
+        adjacency_list[edge.first][edge.second]->supressed = false;
       }
     }
-    break;
+
+    // Restore the nodes
+    for (uint i = 0; i + 2 < lastRoute.size(); ++i) {
+      uint node_id = node_identifier[rootRoute->getNode(i)];
+      nodes[node_id]->supressed = false;
+    }
+    if (pq.empty()) {
+      // No other paths available
+      break;
+    }
+    routes.push_back(pq.top().second);
+    pq.pop();
   }
+
+  // Unsupress the input nodes
+  for (uint node_to_supress : to_supress) {
+    nodes[node_to_supress]->supressed = false;
+  }
+
+  return routes;
 }
 
 template class Graph<Contact>;

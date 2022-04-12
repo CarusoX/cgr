@@ -7,6 +7,8 @@ void ContactPlan::add_participant_to_dictionary(std::string participant) {
 
     // We save the index of the identity contact for the participant
     participant_to_identity[participant] = contacts.size();
+    // Push the index to the identities
+    identities.push_back(contacts.size());
 
     // Push the identity contact
     contacts.push_back(new Contact(participant, participant, 0, -1, 1, 0));
@@ -97,5 +99,12 @@ std::vector<RouteT<Contact>> ContactPlan::yen(std::string from, std::string to, 
   uint from_index = participant_to_identity[from];
   uint to_index = participant_to_identity[to];
 
-  return graph->yen(from_index, to_index, ammount);
+  std::vector<uint> identities_to_delete;
+  for (uint identity : identities) {
+    if (identity != from_index && identity != to_index) {
+      identities_to_delete.push_back(identity);
+    }
+  }
+
+  return graph->yen(from_index, to_index, ammount, identities_to_delete);
 }

@@ -11,7 +11,8 @@ requires CheckType<T, Node>
 class GraphNode {
 public:
   T* node;
-  GraphNode(T* _node) : node(_node) {}
+  bool supressed;
+  GraphNode(T* _node) : node(_node), supressed(0) {}
 };
 
 template <class T>

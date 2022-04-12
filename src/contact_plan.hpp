@@ -18,6 +18,8 @@ private:
   std::unordered_map<std::string, uint> participant_to_identifier; // participant to identifier
   std::unordered_map<std::string, uint> participant_to_identity; // participant to identity contact
 
+  std::vector<uint> identities;
+
   GraphT<Contact> graph = NULL;
 
   void add_participant_to_dictionary(std::string participant);

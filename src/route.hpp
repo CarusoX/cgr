@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "contact.hpp"
+#include "graph_node.hpp"
 #include "utilities.hpp"
 
 // template <class T, class S>
@@ -16,13 +17,20 @@ private:
   double routeCost;
 
 public:
+  Route();
   Route(std::vector<T*> _route, double _routeCost);
+
+  ~Route();
+
+  bool isValid();
 
   Route<T>* addNode(T* contact);
 
+  Route<T>* merge(Route<T>* otherRoute);
+
   std::vector<T*> getRoute();
 
-  std::vector<T*> getPrefixRoute(uint p);
+  T* getNode(uint p);
 
   double getRouteCost();
 
