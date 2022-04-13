@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "contact.hpp"
-#include "graph_node.hpp"
 #include "utilities.hpp"
 
 // template <class T, class S>

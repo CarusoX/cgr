@@ -8,9 +8,9 @@ int main() {
   std::vector<ContactT> contacts = read_contact_plan("../plans/tutorial.txt");
 
   ContactPlan* contactPlan = new ContactPlan(contacts);
-  Route<Contact> *route = contactPlan->dijkstra("1", "5");
+  // Route<Contact> *route = contactPlan->dijkstra("1", "5");
   // route->debug();
-  std::vector<RouteT<Contact>> yenRoutes = contactPlan->yen("1", "5", 5);
+  std::vector<RouteT<Contact>> yenRoutes = contactPlan->yen("1", "5", 7);
   for(RouteT<Contact> route : yenRoutes) {
     route->debug();
     std::cout << "============" << std::endl;

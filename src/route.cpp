@@ -50,7 +50,7 @@ std::vector<T*> Route<T>::getRoute() {
 
 template <class T>
 T* Route<T>::getNode(uint p) {
-  if (p < 0 || route.size() <= p) {
+  if (route.size() <= p) {
     std::cerr << "Node at position " << p << " does not exist" << std::endl;
     exit(-1);
   }

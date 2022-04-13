@@ -1,8 +1,8 @@
 CXX=g++
 RM=rm -f
-CPPFLAGS=-g --std=c++20
+CPPFLAGS=-g --std=c++20 -Wall -Wextra
 
-SRCS=contact_plan.cpp contact.cpp graph.cpp main.cpp read.cpp route.cpp utilities.cpp
+SRCS=contact_plan.cpp contact.cpp main.cpp read.cpp route.cpp utilities.cpp
 OBJS=$(subst .cpp,.o,$(SRCS))
 
 all: cgr
