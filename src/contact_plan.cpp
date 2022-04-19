@@ -253,6 +253,14 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
       supressed[lastRoute[i].first] = false;
     }
 
+    if(ammount <= pq.size() + paths.size()) {
+      while(paths.size() != ammount) {
+        paths.push_back(pq.top().second);
+        pq.pop();
+      }
+      break;
+    }
+
 
     if (pq.empty()) {
       // No other paths available

@@ -17,7 +17,7 @@ int main() {
   ContactPlan* contactPlan = new ContactPlan(contacts);
   // Route<Contact> *route = contactPlan->dijkstra("1", "5");
   // route->debug();
-  std::vector<RouteT<Contact>> yenRoutes = contactPlan->yen("1", "4", 100000);
+  std::vector<RouteT<Contact>> yenRoutes = contactPlan->yen("1", "4", 40000);
   std::cout << "YEN ROUTES\n============" << std::endl;
   std::cout << yenRoutes.size() << std::endl;
   // for (RouteT<Contact> route : yenRoutes) {
@@ -25,9 +25,9 @@ int main() {
   //   std::cout << "============" << std::endl;
   // }
 
-  std::vector<RouteT<Contact>> dfsRoutes = contactPlan->dfs("1", "4");
-  std::cout << "DFS ROUTES\n============" << std::endl;
-  std::cout << dfsRoutes.size() << std::endl;
+  // std::vector<RouteT<Contact>> dfsRoutes = contactPlan->dfs("1", "4");
+  // std::cout << "DFS ROUTES\n============" << std::endl;
+  // std::cout << dfsRoutes.size() << std::endl;
   // for (RouteT<Contact> route : dfsRoutes) {
   //   route->debug();
   //   std::cout << "============" << std::endl;
