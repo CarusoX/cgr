@@ -169,8 +169,10 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
   // Push the first route to the list
   paths.push_back(bestPath);
 
-  // Will represent a pair of {c, p}, meaning we have a path "p" with cost "c"
-  typedef std::pair<double, path> state;
+  // Will represent a pair of {{c, d}, p}, meaning we have a path "p" with cost "c" that deviated from parent at index "d"
+  typedef std::pair<std::pair<double, uint>, path> state;
+
+  uint deviation = 0;
 
   // Create a minimum heap for the paths
   std::priority_queue<state, std::vector<state>, std::function<bool(state, state)>> pq(path_with_cost_greater);
@@ -216,8 +218,11 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
 
       std::pair<path, double> spur_dijkstra_run = { {}, -1 };
 
-      // Calculate the spur path from the spur node to the sink
-      spur_dijkstra_run = cgr_dijkstra(spurNode, to, rootPathCost);
+      if(deviation <= i) {
+        // Calculate the spur path from the spur node to the sink
+        spur_dijkstra_run = cgr_dijkstra(spurNode, to, rootPathCost);
+      }
+
 
       path spurPath = spur_dijkstra_run.first;
       double spurPathCost = spur_dijkstra_run.second;
@@ -226,7 +231,7 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
         path totalPath = {};
         totalPath.insert(totalPath.end(), rootPath.begin(), rootPath.end());
         totalPath.insert(totalPath.end(), spurPath.begin(), spurPath.end());
-        pq.push({ spurPathCost, totalPath });
+        pq.push({ { spurPathCost, i }, totalPath });
       }
 
       // Now the spur node is fixated
@@ -249,20 +254,14 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
     }
 
 
-    // We shouldn't be equal to the last path
-    while (!pq.empty()) {
-      bool isDuplicate = false;
-      for (path path : paths) isDuplicate = isDuplicate || path == pq.top().second;
-      if (isDuplicate) pq.pop();
-      else break;
-    }
-
     if (pq.empty()) {
       // No other paths available
       break;
     }
 
     path nextPath = pq.top().second;
+    deviation = pq.top().first.second;
+
     pq.pop();
 
     // Add the new path

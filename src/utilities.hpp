@@ -11,6 +11,6 @@ bool double_less(double a, double b, double eps = EPS);
 
 using path = std::vector<std::pair<uint, uint>>;
 
-bool path_with_cost_greater(const std::pair<double, path> s1, const std::pair<double, path> s2);
+bool path_with_cost_greater(const std::pair<std::pair<double, uint>, path> s1, const std::pair<std::pair<double, uint>, path> s2);
 
 #endif
