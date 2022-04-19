@@ -2,3 +2,4 @@
 /src/*.o
 /src/.depend
 .vscode/
+/test/ej
