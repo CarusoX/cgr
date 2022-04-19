@@ -33,18 +33,18 @@ double Contact::getOwlt() {
   return owlt;
 }
 
-bool Contact::canGoTo(Contact* contact, double time) {
-  return double_less(time, contact->getEnd());
+bool Contact::canGoTo(double time) {
+  return double_less(time, this->getEnd());
 }
 
-double Contact::edgeCost(Contact* contact, double time) {
-  if (!canGoTo(contact, time)) {
-    std::cerr << "You can't go to that contact" << std::endl;
+double Contact::edgeCost(double time) {
+  if (!canGoTo(time)) {
+    std::cerr << "You can't use this contact at time " << time << std::endl;
     exit(-1);
   }
-  if (time < contact->getStart()) {
-    return contact->getStart() + contact->getOwlt();
+  if (double_less(time, this->getStart())) {
+    return this->getStart() + this->getOwlt();
   }
 
-  return time + contact->getOwlt();
+  return time + this->getOwlt();
 }

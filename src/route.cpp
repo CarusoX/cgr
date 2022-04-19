@@ -27,9 +27,7 @@ bool Route<T>::isValid() {
 
 template <class T>
 RouteT<T> Route<T>::addNode(T* node) {
-  if (route.size()) {
-    routeCost = route.back()->edgeCost(node, routeCost);
-  }
+  routeCost = node->edgeCost(routeCost);
   route.push_back(node);
   return this;
 }
@@ -37,14 +35,14 @@ RouteT<T> Route<T>::addNode(T* node) {
 template <class T>
 RouteT<T> Route<T>::merge(RouteT<T> otherRoute) {
   std::vector<T*> nodes = otherRoute->getRoute();
-  for(T* node : nodes) {
+  for (T* node : nodes) {
     this->addNode(node);
   }
   return this;
 }
 
 template <class T>
-std::vector<T*> Route<T>::getRoute() {
+std::vector<T*> Route<T>::getRoute() const {
   return route;
 }
 
@@ -58,8 +56,24 @@ T* Route<T>::getNode(uint p) {
 }
 
 template <class T>
-double Route<T>::getRouteCost() {
+double Route<T>::getRouteCost() const {
   return routeCost;
+}
+
+template <class T>
+bool Route<T>::operator<(const Route<T>* otherRoute) {
+  if(double_equal(routeCost, otherRoute->getRouteCost())) {
+    if(route.size() == otherRoute->getRoute().size()) {
+      return route < otherRoute->getRoute();
+    }
+    return route.size() < otherRoute->getRoute().size();
+  }
+  return double_less(routeCost, otherRoute->getRouteCost());
+}
+
+template <class T>
+bool Route<T>::operator==(const Route<T>* otherRoute) {
+  return double_equal(routeCost, otherRoute->getRouteCost()) && route == otherRoute->getRoute();
 }
 
 template class Route<Contact>;

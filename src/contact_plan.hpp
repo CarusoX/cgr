@@ -11,19 +11,20 @@
 
 struct Edge {
   uint to;
+  ContactT contact;
   bool supressed;
-  Edge(uint _to) : to(_to), supressed(false) {}
+  Edge(uint _to, ContactT _contact) : to(_to), contact(_contact), supressed(false) {}
 };
+
+using path = std::vector<std::pair<uint, uint>>;
 
 class ContactPlan {
 
 private:
-  uint n; // the ammount of contacts (includes identity contacts)
-  uint p; // the ammount of participants
+  uint n; // the ammount of particpants
   std::vector<ContactT> contacts; // the available contacts
 
   std::unordered_map<std::string, uint> participant_to_identifier; // participant to identifier
-  std::unordered_map<std::string, uint> participant_to_identity; // participant to identity contact
 
   void add_participant_to_dictionary(std::string participant);
 
@@ -46,16 +47,23 @@ private:
 
   void prepare_working_area();
 
-  RouteT<Contact> cgr_dijkstra(uint from, uint to);
+  RouteT<Contact> path_to_route(path);
+
+  std::pair<path, double> cgr_dijkstra(uint from, uint to, double start = 0);
 
   // ---------------------------------------------------------------------------
   // Yen related stuff
   // ---------------------------------------------------------------------------=
   std::vector<bool> supressed;
-  std::unordered_map<ContactT, uint> contact_to_identifier; // contact to identifier
-  std::vector<std::unordered_map<uint, uint>> edge_identifier; // edge -> identifier
 
   std::vector<RouteT<Contact>> cgr_yen(uint from, uint to, uint ammount);
+  
+  // ---------------------------------------------------------------------------
+  // DFS related stuff
+  // ---------------------------------------------------------------------------
+  path dfs_stack;
+  std::vector<bool> dfs_visited;
+  void cgr_dfs(uint where, uint to, std::vector<RouteT<Contact>> &routes, double currentTime = 0);
 
 public:
   ContactPlan(std::vector<ContactT> contacts);
@@ -63,6 +71,8 @@ public:
   RouteT<Contact> dijkstra(std::string from, std::string to);
 
   std::vector<RouteT<Contact>> yen(std::string from, std::string to, uint ammount);
+
+  std::vector<RouteT<Contact>> dfs(std::string from, std::string to);
 
   void debug() {
     std::cout << "Number of nodes " << n << "\n";

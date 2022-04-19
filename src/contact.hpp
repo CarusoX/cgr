@@ -31,9 +31,9 @@ public:
 
   double getOwlt();
 
-  bool canGoTo(Contact* neighbour, double time);
+  bool canGoTo(double time);
 
-  double edgeCost(Contact* neighbour, double time);
+  double edgeCost(double time);
 
   void debug() {
     std::cout << from << " " << to << " " << start << " " << end << " " << rate << " " << owlt << "\n";

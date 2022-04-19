@@ -4,19 +4,11 @@ void ContactPlan::add_participant_to_dictionary(std::string participant) {
   if (!participant_to_identifier.count(participant)) {
     // We assign the participant a new identifier
     participant_to_identifier[participant] = participant_to_identifier.size();
-
-    // We save the index of the identity contact for the participant
-    participant_to_identity[participant] = contacts.size();
-
-    // Push the identity contact
-    ContactT identityContact = new Contact(participant, participant, 0, -1, 1, 0);
-    contact_to_identifier[identityContact] = contacts.size();
-    contacts.push_back(identityContact);
   }
 }
 
 void ContactPlan::assert_participant_exists(std::string participant) {
-  if (!participant_to_identity.count(participant)) {
+  if (!participant_to_identifier.count(participant)) {
     std::cerr << participant << " is not a valid participant.\n";
     exit(-1);
   }
@@ -24,33 +16,12 @@ void ContactPlan::assert_participant_exists(std::string participant) {
 
 void ContactPlan::build_graph() {
 
-  // Which contacts have i as "from"
-  std::vector<std::vector<uint>> who_from(n);
-  // Which contacts have i as "to"
-  std::vector<std::vector<uint>> who_to(n);
-
-  for (uint i = 0; i < n; ++i) {
-    ContactT contact = contacts[i];
-    uint from_index = participant_to_identifier[contact->getFrom()];
-    uint to_index = participant_to_identifier[contact->getTo()];
-    who_from[from_index].push_back(i);
-    who_to[to_index].push_back(i);
-  }
-
   adjacency_list.resize(n);
-  edge_identifier.resize(n);
 
-  // Now we can build the edges
-  for (uint i = 0; i < n; ++i) {
-    std::vector<uint>& who_from_i = who_from[i];
-    std::vector<uint>& who_to_i = who_to[i];
-
-    for (uint x : who_to_i) for (uint y : who_from_i) {
-      if (x != y) { // avoid identity edges
-        edge_identifier[x][y] = adjacency_list[x].size();
-        adjacency_list[x].push_back(new Edge(y));
-      }
-    }
+  for (ContactT contact : contacts) {
+    uint from = participant_to_identifier[contact->getFrom()];
+    uint to = participant_to_identifier[contact->getTo()];
+    adjacency_list[from].push_back(new Edge(to, contact));
   }
 }
 
@@ -63,16 +34,10 @@ ContactPlan::ContactPlan(std::vector<ContactT> _contacts) {
   }
 
   // Insert the contacts
-  for (ContactT contact : _contacts) {
-    contact_to_identifier[contact] = contacts.size();
-    contacts.push_back(contact);
-  }
+  contacts = _contacts;
 
   // Set the number of contacts
   n = contacts.size();
-
-  // Set the number of participants
-  p = participant_to_identifier.size();
 
   // Build the graph
   build_graph();
@@ -80,7 +45,7 @@ ContactPlan::ContactPlan(std::vector<ContactT> _contacts) {
 
 void ContactPlan::prepare_working_area() {
   // Initialize arrival times to -1
-  arrivalTime.resize(p);
+  arrivalTime.resize(n);
   fill(arrivalTime.begin(), arrivalTime.end(), -1);
 
   supressed.resize(n, false);
@@ -88,41 +53,42 @@ void ContactPlan::prepare_working_area() {
   prevedge.resize(n);
 }
 
+RouteT<Contact> ContactPlan::path_to_route(path path) {
+  // Return an invalid route if there is no path
+  if (path.size() == 0) return new Route<Contact>({}, -1);
 
-RouteT<Contact> ContactPlan::cgr_dijkstra(uint from, uint to) {
+  RouteT<Contact> route = new Route<Contact>();
+
+  for (uint i = 0; i + 1 < path.size(); ++i) {
+    ContactT contactToAdd = adjacency_list[path[i].first][path[i].second]->contact;
+    route->addNode(contactToAdd);
+  }
+
+  return route;
+}
+
+std::pair<path, double> ContactPlan::cgr_dijkstra(uint from, uint to, double start) {
   // Will represent a pair of { c, n }, meaning we have a path of cost "c" to node "n"
   typedef std::pair<double, uint> state;
   // Create a minimum heap
   std::priority_queue<state, std::vector<state>, std::greater<state>> pq;
 
-  std::string rootParticipant = contacts[from]->getTo();
-  std::string terminalParticipant = contacts[to]->getTo();
-
   // From node setup
-  arrivalTime[participant_to_identifier[rootParticipant]] = 0;
-  pq.push({ 0, from });
+  arrivalTime[from] = start;
+  pq.push({ start, from });
   prevnode[from] = -1;
   prevedge[from] = -1;
-
-  uint lastNeededContact = -1;
 
   while (!pq.empty()) {
     // Get the best state so far
     double currentArrivalTime = pq.top().first;
     uint current = pq.top().second;
-    ContactT currentContact = contacts[current];
-    uint currentParticipant = participant_to_identifier[currentContact->getTo()];
 
     pq.pop();
 
     // If this isn't the real best path to the node, skip it
-    if (!double_equal(currentArrivalTime, arrivalTime[currentParticipant])) {
+    if (!double_equal(currentArrivalTime, arrivalTime[current])) {
       continue;
-    }
-
-    if (currentParticipant == participant_to_identifier[terminalParticipant]) {
-      lastNeededContact = current;
-      break;
     }
 
     // Traverse all the edges
@@ -134,19 +100,18 @@ RouteT<Contact> ContactPlan::cgr_dijkstra(uint from, uint to) {
 
 
       uint neighbour = edge->to;
-      ContactT nextContact = contacts[neighbour];
-      uint nextParticipant = participant_to_identifier[nextContact->getTo()];
+      ContactT neighbourContact = edge->contact;
 
       // If there is no way to go the next node, or it's supressed, continue
-      if (!currentContact->canGoTo(nextContact, currentArrivalTime) || supressed[neighbour]) {
+      if (!neighbourContact->canGoTo(currentArrivalTime) || supressed[neighbour]) {
         continue;
       }
 
-      double nextArrivalTime = currentContact->edgeCost(nextContact, currentArrivalTime);
+      double nextArrivalTime = neighbourContact->edgeCost(currentArrivalTime);
 
-      if (double_equal(arrivalTime[nextParticipant], -1) || double_less(nextArrivalTime, arrivalTime[nextParticipant])) {
+      if (double_equal(arrivalTime[neighbour], -1) || double_less(nextArrivalTime, arrivalTime[neighbour])) {
         // If this contact was not reached yet, or we found a better path, update accordingly
-        arrivalTime[nextParticipant] = nextArrivalTime;
+        arrivalTime[neighbour] = nextArrivalTime;
         prevnode[neighbour] = current;
         prevedge[neighbour] = edge_index;
         pq.push({ nextArrivalTime, neighbour });
@@ -156,21 +121,23 @@ RouteT<Contact> ContactPlan::cgr_dijkstra(uint from, uint to) {
 
 
   // If we did not find a path
-  if (lastNeededContact == uint(-1)) {
-    return new Route<Contact>({}, -1);
+  if (double_equal(arrivalTime[to], -1)) {
+    return {};
   }
 
   // Reconstruct the route backwards
-  std::vector<ContactT> route;
-  uint current = lastNeededContact;
+  path route;
+  uint current = to;
+  uint current_edge = -1;
   while (current != uint(-1)) {
-    route.push_back(contacts[current]);
+    route.push_back({ current, current_edge });
+    current_edge = prevedge[current];
     current = prevnode[current];
   }
   // Reverse the route
   reverse(route.begin(), route.end());
 
-  return new Route(route, arrivalTime[participant_to_identifier[terminalParticipant]]);
+  return { route, arrivalTime[to] };
 }
 
 RouteT<Contact> ContactPlan::dijkstra(std::string from, std::string to) {
@@ -179,92 +146,96 @@ RouteT<Contact> ContactPlan::dijkstra(std::string from, std::string to) {
   assert_participant_exists(from);
   assert_participant_exists(to);
 
-  uint from_index = participant_to_identity[from];
-  uint to_index = participant_to_identity[to];
+  uint from_index = participant_to_identifier[from];
+  uint to_index = participant_to_identifier[to];
 
   prepare_working_area();
 
-  return cgr_dijkstra(from_index, to_index);
+  return path_to_route(cgr_dijkstra(from_index, to_index).first);
 }
 
 std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammount) {
-  std::vector<RouteT<Contact>> routes;
+  std::vector<path> paths;
 
   prepare_working_area();
-  RouteT<Contact> bestRoute = cgr_dijkstra(from, to);
+  path bestPath = cgr_dijkstra(from, to).first;
 
 
-  if (!bestRoute->isValid()) {
+  if (bestPath.size() == 0) {
     // There are no routes in this case
-    return routes;
+    return {};
   }
 
   // Push the first route to the list
-  routes.push_back(bestRoute);
+  paths.push_back(bestPath);
 
-  // Will represent a pair of {c, r}, meaning we have a route "r" with cost "c"
-  typedef std::pair<double, RouteT<Contact>> state;
+  // Will represent a pair of {c, p}, meaning we have a path "p" with cost "c"
+  typedef std::pair<double, path> state;
 
-  // Create a minimum heap for the routes
-  std::priority_queue<state, std::vector<state>, std::greater<state>> pq;
+  // Create a minimum heap for the paths
+  std::priority_queue<state, std::vector<state>, std::function<bool(state, state)>> pq(path_with_cost_greater);
 
   for (uint k = 1; k < ammount; ++k) {
-    // Get the previous best route
-    std::vector<ContactT> lastRoute = routes[k - 1]->getRoute();
+    // Get the previous best path
+    path lastRoute = paths[k - 1];
 
-    RouteT<Contact> rootRoute = new Route<Contact>();
+    path rootPath = {};
+    double rootPathCost = 0;
 
     // Initialize the matching routes
-    std::vector<uint> matching_routes, next_matching_routes;
+    std::vector<uint> matching_paths, next_matching_paths;
     for (uint i = 0; i < k; ++i) {
-      matching_routes.push_back(i);
+      matching_paths.push_back(i);
     }
 
     for (uint i = 0; i + 1 < lastRoute.size(); ++i) {
       std::vector<std::pair<uint, uint>> deleted_edges;
 
-      ContactT spurContact = lastRoute[i];
-      uint spurIdentifier = contact_to_identifier[spurContact];
+      uint spurNode = lastRoute[i].first;
 
       // Recalculate the matching routes based on the last vertex
-      for (uint matching_route : matching_routes) {
-        if (routes[matching_route]->getNode(i) == spurContact) {
+      for (uint matching_path : matching_paths) {
+        if (paths[matching_path][i].first == spurNode) {
           // We need to delete the edge with the next node
-          uint next_node_id = contact_to_identifier[routes[matching_route]->getNode(i + 1)];
-          uint edge_to_delete = edge_identifier[spurIdentifier][next_node_id];
-          adjacency_list[spurIdentifier][edge_to_delete]->supressed = true;
+          adjacency_list[spurNode][paths[matching_path][i].second]->supressed = true;
 
           // We later need to restore it
-          deleted_edges.push_back(std::make_pair(spurIdentifier, edge_to_delete));
+          deleted_edges.push_back({ spurNode, paths[matching_path][i].second });
 
-          // This route is still matching
-          next_matching_routes.push_back(matching_route);
+          if (paths[matching_path][i].second == lastRoute[i].second) {
+            // This route is still matching
+            next_matching_paths.push_back(matching_path);
+          }
         }
       }
-      swap(matching_routes, next_matching_routes);
-      next_matching_routes.clear();
+      swap(matching_paths, next_matching_paths);
+      next_matching_paths.clear();
 
 
       prepare_working_area();
-      for(uint j = 0; j < i; ++j) {
-        // We don't want to come back to these particpants
-        arrivalTime[participant_to_identifier[rootRoute->getNode(j)->getTo()]] = 0;
-      }
+
+      std::pair<path, double> spur_dijkstra_run = { {}, -1 };
 
       // Calculate the spur path from the spur node to the sink
-      RouteT<Contact> spurPath = cgr_dijkstra(spurIdentifier, to);
+      spur_dijkstra_run = cgr_dijkstra(spurNode, to, rootPathCost);
 
-      if (spurPath->isValid()) {
-        RouteT<Contact> totalPath = new Route<Contact>();
-        totalPath->merge(rootRoute)->merge(spurPath);
-        pq.push({ totalPath->getRouteCost(), totalPath });
+      path spurPath = spur_dijkstra_run.first;
+      double spurPathCost = spur_dijkstra_run.second;
+
+      if (spurPath.size() > 0) {
+        path totalPath = {};
+        totalPath.insert(totalPath.end(), rootPath.begin(), rootPath.end());
+        totalPath.insert(totalPath.end(), spurPath.begin(), spurPath.end());
+        pq.push({ spurPathCost, totalPath });
       }
 
       // Now the spur node is fixated
-      rootRoute->addNode(spurContact);
+      rootPath.push_back(lastRoute[i]);
+      ContactT usedContact = adjacency_list[lastRoute[i].first][lastRoute[i].second]->contact;
+      rootPathCost = usedContact->edgeCost(rootPathCost);
 
       // Supress it for next time
-      supressed[spurIdentifier] = true;
+      supressed[spurNode] = true;
 
       // Restore the edges
       for (std::pair<uint, uint> edge : deleted_edges) {
@@ -274,15 +245,33 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
 
     // Restore the nodes
     for (uint i = 0; i + 1 < lastRoute.size(); ++i) {
-      uint node_id = contact_to_identifier[rootRoute->getNode(i)];
-      supressed[node_id] = false;
+      supressed[lastRoute[i].first] = false;
     }
+
+
+    // We shouldn't be equal to the last path
+    while (!pq.empty()) {
+      bool isDuplicate = false;
+      for (path path : paths) isDuplicate = isDuplicate || path == pq.top().second;
+      if (isDuplicate) pq.pop();
+      else break;
+    }
+
     if (pq.empty()) {
       // No other paths available
       break;
     }
-    routes.push_back(pq.top().second);
+
+    path nextPath = pq.top().second;
     pq.pop();
+
+    // Add the new path
+    paths.push_back(nextPath);
+  }
+
+  std::vector<RouteT<Contact>> routes;
+  for (path path : paths) {
+    routes.push_back(path_to_route(path));
   }
 
   return routes;
@@ -294,8 +283,53 @@ std::vector<RouteT<Contact>> ContactPlan::yen(std::string from, std::string to, 
   assert_participant_exists(from);
   assert_participant_exists(to);
 
-  uint from_index = participant_to_identity[from];
-  uint to_index = participant_to_identity[to];
+  uint from_index = participant_to_identifier[from];
+  uint to_index = participant_to_identifier[to];
 
   return cgr_yen(from_index, to_index, ammount);
+}
+
+void ContactPlan::cgr_dfs(uint where, uint to, std::vector<RouteT<Contact>>& routes, double currentTime) {
+
+  if (where == to) {
+    dfs_stack.push_back({ where, -1 });
+    routes.push_back(path_to_route(dfs_stack));
+    dfs_stack.pop_back();
+    return;
+  }
+
+  dfs_visited[where] = 1;
+
+  for (uint i = 0; i < adjacency_list[where].size(); ++i) {
+    Edge* edge = adjacency_list[where][i];
+    if (!dfs_visited[edge->to] && edge->contact->canGoTo(currentTime)) {
+      dfs_stack.push_back({ where, i });
+      cgr_dfs(edge->to, to, routes, edge->contact->edgeCost(currentTime));
+      dfs_stack.pop_back();
+    }
+  }
+
+  dfs_visited[where] = 0;
+}
+
+std::vector<RouteT<Contact>> ContactPlan::dfs(std::string from, std::string to) {
+  // Assert from and to exists
+  assert_participant_exists(from);
+  assert_participant_exists(to);
+
+  uint from_index = participant_to_identifier[from];
+  uint to_index = participant_to_identifier[to];
+
+  std::vector<RouteT<Contact>> routes;
+
+  dfs_visited.resize(n);
+  fill(dfs_visited.begin(), dfs_visited.end(), 0);
+
+  cgr_dfs(from_index, to_index, routes);
+
+  sort(routes.begin(), routes.end(), [](RouteT<Contact> routeA, RouteT<Contact> routeB)->bool {
+    return (*routeA) < routeB;
+    });
+
+  return routes;
 }

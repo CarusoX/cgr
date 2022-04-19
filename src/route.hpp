@@ -27,11 +27,15 @@ public:
 
   Route<T>* merge(Route<T>* otherRoute);
 
-  std::vector<T*> getRoute();
+  std::vector<T*> getRoute() const;
 
   T* getNode(uint p);
 
-  double getRouteCost();
+  double getRouteCost() const;
+
+  bool operator<(const Route<T>* otherRoute);
+
+  bool operator==(const Route<T>* otherRoute);
 
   void debug() {
     for (T* node : route) {
