@@ -43,16 +43,6 @@ ContactPlan::ContactPlan(std::vector<ContactT> _contacts) {
   build_graph();
 }
 
-void ContactPlan::prepare_working_area() {
-  // Initialize arrival times to -1
-  arrivalTime.resize(n);
-  fill(arrivalTime.begin(), arrivalTime.end(), -1);
-
-  supressed.resize(n, false);
-  prevnode.resize(n);
-  prevedge.resize(n);
-}
-
 RouteT<Contact> ContactPlan::path_to_route(path path) {
   // Return an invalid route if there is no path
   if (path.size() == 0) return new Route<Contact>({}, -1);
@@ -60,7 +50,8 @@ RouteT<Contact> ContactPlan::path_to_route(path path) {
   RouteT<Contact> route = new Route<Contact>();
 
   for (uint i = 0; i + 1 < path.size(); ++i) {
-    ContactT contactToAdd = adjacency_list[path[i].first][path[i].second]->contact;
+    const auto& [node, edgeTaken] = path[i];
+    ContactT contactToAdd = adjacency_list[node][edgeTaken]->contact;
     route->addNode(contactToAdd);
   }
 
@@ -68,6 +59,15 @@ RouteT<Contact> ContactPlan::path_to_route(path path) {
 }
 
 std::pair<path, double> ContactPlan::cgr_dijkstra(uint from, uint to, double start) {
+
+  // Initialize arrival times to -1
+  arrivalTime.resize(n);
+  supressed.resize(n, false);
+  prevnode.resize(n);
+  prevedge.resize(n);
+
+  fill(arrivalTime.begin(), arrivalTime.end(), -1);
+
   // Will represent a pair of { c, n }, meaning we have a path of cost "c" to node "n"
   typedef std::pair<double, uint> state;
   // Create a minimum heap
@@ -81,8 +81,7 @@ std::pair<path, double> ContactPlan::cgr_dijkstra(uint from, uint to, double sta
 
   while (!pq.empty()) {
     // Get the best state so far
-    double currentArrivalTime = pq.top().first;
-    uint current = pq.top().second;
+    const auto [currentArrivalTime, current] = pq.top();
 
     pq.pop();
 
@@ -149,15 +148,12 @@ RouteT<Contact> ContactPlan::dijkstra(std::string from, std::string to) {
   uint from_index = participant_to_identifier[from];
   uint to_index = participant_to_identifier[to];
 
-  prepare_working_area();
-
   return path_to_route(cgr_dijkstra(from_index, to_index).first);
 }
 
 std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammount) {
   std::vector<path> paths;
 
-  prepare_working_area();
   path bestPath = cgr_dijkstra(from, to).first;
 
 
@@ -193,18 +189,18 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
     for (uint i = 0; i + 1 < lastRoute.size(); ++i) {
       std::vector<std::pair<uint, uint>> deleted_edges;
 
-      uint spurNode = lastRoute[i].first;
-
+      const auto [spurNode, spurEdgeTaken] = lastRoute[i];
       // Recalculate the matching routes based on the last vertex
       for (uint matching_path : matching_paths) {
-        if (paths[matching_path][i].first == spurNode) {
+        const auto [matchingNode, matchingEdgeTaken] = paths[matching_path][i];
+        if (matchingNode == spurNode) {
           // We need to delete the edge with the next node
-          adjacency_list[spurNode][paths[matching_path][i].second]->supressed = true;
+          adjacency_list[spurNode][matchingEdgeTaken]->supressed = true;
 
           // We later need to restore it
-          deleted_edges.push_back({ spurNode, paths[matching_path][i].second });
+          deleted_edges.push_back({ spurNode, matchingEdgeTaken });
 
-          if (paths[matching_path][i].second == lastRoute[i].second) {
+          if (matchingEdgeTaken == spurEdgeTaken) {
             // This route is still matching
             next_matching_paths.push_back(matching_path);
           }
@@ -213,38 +209,36 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
       swap(matching_paths, next_matching_paths);
       next_matching_paths.clear();
 
-
-      prepare_working_area();
-
       std::pair<path, double> spur_dijkstra_run = { {}, -1 };
 
-      if(deviation <= i) {
+      if (deviation <= i) {
         // Calculate the spur path from the spur node to the sink
         spur_dijkstra_run = cgr_dijkstra(spurNode, to, rootPathCost);
       }
-
 
       path spurPath = spur_dijkstra_run.first;
       double spurPathCost = spur_dijkstra_run.second;
 
       if (spurPath.size() > 0) {
+        // Build the total path
         path totalPath = {};
         totalPath.insert(totalPath.end(), rootPath.begin(), rootPath.end());
         totalPath.insert(totalPath.end(), spurPath.begin(), spurPath.end());
+        // The path deviated at node i
         pq.push({ { spurPathCost, i }, totalPath });
       }
 
-      // Now the spur node is fixated
+      // Now the spur node is added to the root path
       rootPath.push_back(lastRoute[i]);
-      ContactT usedContact = adjacency_list[lastRoute[i].first][lastRoute[i].second]->contact;
+      ContactT usedContact = adjacency_list[spurNode][spurEdgeTaken]->contact;
       rootPathCost = usedContact->edgeCost(rootPathCost);
 
       // Supress it for next time
       supressed[spurNode] = true;
 
       // Restore the edges
-      for (std::pair<uint, uint> edge : deleted_edges) {
-        adjacency_list[edge.first][edge.second]->supressed = false;
+      for (const auto& [node, edgeTaken] : deleted_edges) {
+        adjacency_list[node][edgeTaken]->supressed = false;
       }
     }
 
@@ -253,8 +247,9 @@ std::vector<RouteT<Contact>> ContactPlan::cgr_yen(uint from, uint to, uint ammou
       supressed[lastRoute[i].first] = false;
     }
 
-    if(ammount <= pq.size() + paths.size()) {
-      while(paths.size() != ammount) {
+    // If we already have enough paths, just toss them
+    if (ammount <= pq.size() + paths.size()) {
+      while (paths.size() != ammount) {
         paths.push_back(pq.top().second);
         pq.pop();
       }

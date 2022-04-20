@@ -33,7 +33,7 @@ RouteT<T> Route<T>::addNode(T* node) {
 }
 
 template <class T>
-RouteT<T> Route<T>::merge(RouteT<T> otherRoute) {
+RouteT<T> Route<T>::merge(const RouteT<T> otherRoute) {
   std::vector<T*> nodes = otherRoute->getRoute();
   for (T* node : nodes) {
     this->addNode(node);

@@ -9,35 +9,35 @@ Contact::Contact(std::string _from, std::string _to, uint _start, uint _end, dou
   owlt = _owlt;
 }
 
-std::string Contact::getFrom() {
+std::string Contact::getFrom() const {
   return from;
 }
 
-std::string Contact::getTo() {
+std::string Contact::getTo() const {
   return to;
 }
 
-uint Contact::getStart() {
+uint Contact::getStart() const {
   return start;
 }
 
-uint Contact::getEnd() {
+uint Contact::getEnd() const {
   return end;
 }
 
-double Contact::getRate() {
+double Contact::getRate() const {
   return rate;
 }
 
-double Contact::getOwlt() {
+double Contact::getOwlt() const {
   return owlt;
 }
 
-bool Contact::canGoTo(double time) {
+bool Contact::canGoTo(double time) const {
   return double_less(time, this->getEnd());
 }
 
-double Contact::edgeCost(double time) {
+double Contact::edgeCost(double time) const {
   if (!canGoTo(time)) {
     std::cerr << "You can't use this contact at time " << time << std::endl;
     exit(-1);

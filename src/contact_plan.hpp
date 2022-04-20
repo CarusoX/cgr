@@ -1,6 +1,7 @@
 #ifndef CONTACT_PLAN_H
 #define CONTACT_PLAN_H
 
+#include <chrono>
 #include <iostream>
 #include <unordered_map>
 #include <queue>
@@ -44,8 +45,6 @@ private:
   std::vector<double> arrivalTime;
   std::vector<uint> prevnode;
   std::vector<uint> prevedge;
-
-  void prepare_working_area();
 
   RouteT<Contact> path_to_route(path);
 

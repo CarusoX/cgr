@@ -23,6 +23,8 @@ int main() {
 
   sort(yenRoutes.begin(), yenRoutes.end(), routeCompare);
 
+  assert(yenRoutes.size() == dfsRoutes.size());
+
   for(uint i = 0; i + 1 < dfsRoutes.size(); ++i) {
     assert(routeCompare(dfsRoutes[i], dfsRoutes[i + 1]));
   }

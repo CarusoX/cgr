@@ -13,8 +13,6 @@ std::vector<std::string> split_by(std::string str, std::string delimiter) {
   return parts;
 }
 
-
-
 std::vector<ContactT> read_contact_plan(std::string path) {
   freopen(path.c_str(), "r", stdin);
 

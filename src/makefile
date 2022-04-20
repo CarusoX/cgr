@@ -1,6 +1,6 @@
 CXX=g++
 RM=rm -f
-CPPFLAGS=-g --std=c++20 -Wall -Wextra -O2
+CPPFLAGS=-g --std=c++20 -Wall -Wextra -O3
 
 SRCS=contact_plan.cpp contact.cpp main.cpp read.cpp route.cpp utilities.cpp
 OBJS=$(subst .cpp,.o,$(SRCS))

@@ -19,21 +19,21 @@ private:
 public:
   Contact(std::string _from, std::string _to, uint start, uint end, double rate, double owlt);
 
-  std::string getFrom();
+  std::string getFrom() const;
 
-  std::string getTo();
+  std::string getTo() const;
 
-  uint getStart();
+  uint getStart() const;
 
-  uint getEnd();
+  uint getEnd() const;
 
-  double getRate();
+  double getRate() const;
 
-  double getOwlt();
+  double getOwlt() const;
 
-  bool canGoTo(double time);
+  bool canGoTo(double time) const;
 
-  double edgeCost(double time);
+  double edgeCost(double time) const;
 
   void debug() {
     std::cout << from << " " << to << " " << start << " " << end << " " << rate << " " << owlt << "\n";
