@@ -2,6 +2,9 @@
 #define UTILITIES_H
 
 #include <algorithm>
+#include <vector>
+
+typedef unsigned int uint;
 
 const double EPS = 1e-9;
 
