@@ -35,6 +35,8 @@ public:
 
   double edgeCost(double time) const;
 
+  double effectiveVolume(double time) const;
+
   void debug() {
     std::cout << from << " " << to << " " << start << " " << end << " " << rate << " " << owlt << "\n";
   }

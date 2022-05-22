@@ -48,3 +48,11 @@ double Contact::edgeCost(double time) const {
 
   return time + this->getOwlt();
 }
+
+double Contact::effectiveVolume(double time) const {
+  if (!canGoTo(time)) {
+    std::cerr << "You can't use this contact at time " << time << std::endl;
+    exit(-1);
+  }
+  return (this->getEnd() - std::max(time, double(this->getStart()))) * this->getRate();
+}

@@ -40,5 +40,13 @@ int main() {
     route->debug();
     std::cout << "============" << std::endl;
   }
+
+  std::vector<RouteT<Contact>> firstDepletedRoutes = contactPlan->first_depleted("1", "5");
+  std::cout << "FIRST DEPLETED ROUTES\n============" << std::endl;
+  std::cout << firstDepletedRoutes.size() << std::endl;
+  for (RouteT<Contact> route : firstDepletedRoutes) {
+    route->debug();
+    std::cout << "============" << std::endl;
+  }
   return 0;
 }

@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <unordered_map>
 #include <queue>
 #include <vector>
@@ -70,6 +71,12 @@ private:
 
   std::vector<RouteT<Contact>> cgr_first_ended(uint from, uint to);
 
+  // -----------------------------------------------------------------------------
+  // First depleted related stuff
+  // -----------------------------------------------------------------------------
+
+  std::vector<RouteT<Contact>> cgr_first_depleted(uint from, uint to);
+
 public:
   ContactPlan(std::vector<ContactT> contacts);
 
@@ -80,6 +87,8 @@ public:
   std::vector<RouteT<Contact>> dfs(std::string from, std::string to);
 
   std::vector<RouteT<Contact>> first_ended(std::string from, std::string to);
+
+  std::vector<RouteT<Contact>> first_depleted(std::string from, std::string to);
 
   void debug() {
     std::cout << "Number of nodes " << n << "\n";
