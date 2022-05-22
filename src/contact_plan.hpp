@@ -64,6 +64,12 @@ private:
   std::vector<bool> dfs_visited;
   void cgr_dfs(uint where, uint to, std::vector<RouteT<Contact>> &routes, double currentTime = 0);
 
+  // ---------------------------------------------------------------------------
+  // First ended related stuff
+  // ---------------------------------------------------------------------------
+
+  std::vector<RouteT<Contact>> cgr_first_ended(uint from, uint to);
+
 public:
   ContactPlan(std::vector<ContactT> contacts);
 
@@ -72,6 +78,8 @@ public:
   std::vector<RouteT<Contact>> yen(std::string from, std::string to, uint ammount);
 
   std::vector<RouteT<Contact>> dfs(std::string from, std::string to);
+
+  std::vector<RouteT<Contact>> first_ended(std::string from, std::string to);
 
   void debug() {
     std::cout << "Number of nodes " << n << "\n";

@@ -335,3 +335,54 @@ std::vector<RouteT<Contact>> ContactPlan::dfs(std::string from, std::string to) 
 
   return routes;
 }
+
+std::vector<RouteT<Contact>> ContactPlan::cgr_first_ended(uint from, uint to) {
+  std::vector<RouteT<Contact>> routes;
+
+  std::vector<std::pair<uint, uint>> deleted_edges;
+
+  while (1) {
+    std::pair<path, double> dijkstra_run = cgr_dijkstra(from, to);
+
+    path path = dijkstra_run.first;
+
+    if (path.size() == 0) {
+      // No more routes
+      break;
+    }
+
+    uint min_end = ~0;
+
+    for (uint i = 0; i + 1 < path.size(); ++i) {
+      const auto& [node, edgeTaken] = path[i];
+      min_end = std::min(min_end, adjacency_list[node][edgeTaken]->contact->getEnd());
+    }
+
+    for (uint i = 0; i + 1 < path.size(); ++i) {
+      const auto& [node, edgeTaken] = path[i];
+      if (adjacency_list[node][edgeTaken]->contact->getEnd() == min_end) {
+        adjacency_list[node][edgeTaken]->supressed = true;
+        deleted_edges.push_back({ node, edgeTaken });
+      }
+    }
+
+    routes.push_back(path_to_route(path));
+  }
+
+  for (const auto& [node, edgeTaken] : deleted_edges) {
+    adjacency_list[node][edgeTaken]->supressed = true;
+  }
+
+  return routes;
+}
+
+std::vector<RouteT<Contact>> ContactPlan::first_ended(std::string from, std::string to) {
+  // Assert from and to exists
+  assert_participant_exists(from);
+  assert_participant_exists(to);
+
+  uint from_index = participant_to_identifier[from];
+  uint to_index = participant_to_identifier[to];
+
+  return cgr_first_ended(from_index, to_index);
+}
